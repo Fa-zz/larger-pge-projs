@@ -1,7 +1,3 @@
-#include <time.h>
-#include <thread>
-#include <chrono>
-
 #define OLC_PGE_APPLICATION
 #include "olcPixelGameEngine.h"
 
@@ -10,6 +6,7 @@ using namespace std::chrono_literals;
 class TicTacToe : public olc::PixelGameEngine {
 
 public:
+
     TicTacToe() {
         sAppName = "Tic Tac Toe Clone";
     }
@@ -20,14 +17,14 @@ public:
 
 private:
 
-struct Cell {                           // Cell objs are used to construct each "quadrant" of the TTT board, including where images are drawn within each quadrant
-    olc::vi2d coordsStart;              // coordsStart: The start of the coords of each quadrants' space
-    olc::vi2d coordsEnd;                // coordsEnd: The end of the coords of the each quadrants' space
-    olc::vi2d coordsImageStart;         // coordsImageStart: The start of the coords of each image within each quadrant
-    olc::vi2d imageSize = { 128,128 };  // imageSize: Size of each image
-    
-    int imageKind = 0;                  // imageKind: 1 represents an image drawn by a player, 0 represents image drawn by the computer
-    bool imageDrawn = false;            // imageDrawn: Whether or not an image should be drawn at this quadrant
+    struct Cell {                           // Cell objs are used to construct each "quadrant" of the TTT board, including where images are drawn within each quadrant
+        olc::vi2d coordsStart;              // coordsStart: The start of the coords of each quadrants' space
+        olc::vi2d coordsEnd;                // coordsEnd: The end of the coords of the each quadrants' space
+        olc::vi2d coordsImageStart;         // coordsImageStart: The start of the coords of each image within each quadrant
+        olc::vi2d imageSize = { 128,128 };  // imageSize: Size of each image
+        
+        int imageKind = 0;                  // imageKind: 1 represents an image drawn by a player, 0 represents image drawn by the computer
+        bool imageDrawn = false;            // imageDrawn: Whether or not an image should be drawn at this quadrant
     };
 
     int X_DIFF = 180;                   // X_DIFF: Each quadrant occupies a width of 180 px. Used in determining coordsStart for each quadrant.
@@ -47,6 +44,21 @@ struct Cell {                           // Cell objs are used to construct each 
     // Info for FPS and time
     float fTargetFrameTime = 1.0f / 100.0f; // Virtual FPS of 100fps
     float fAccumulatedTime = 0.0f;
+    float timer = 0;
+
+    bool playerDone = false;    // playerDone: Flag that determines if user has played their turn. Set to false every update
+    int numQuadrantsFilled = 0;
+
+    void resetProcedure() {
+        for (int i = 0; i < NUM_QUADS; i++) {
+            myQuadrants[i].imageDrawn = false;
+            myQuadrants[i].imageKind = 0;
+            timer = 0;
+            playerDone = false;
+            numQuadrantsFilled = 0;
+        }
+    }
+
 
 public:
     bool OnUserCreate() override {
@@ -97,17 +109,19 @@ public:
     }
 
     bool OnUserUpdate(float fElapsedTime) override {
-        bool playerDone = false;    // playerDone: Flag that determines if user has played their turn. Set to false every update
+        std::cout << "Player Done: " << playerDone << std::endl;
+        auto start = std::chrono::system_clock::now();
 
         // Info for FPS/game time
         fAccumulatedTime += fElapsedTime;
-        if (fAccumulatedTime >= fTargetFrameTime)
-        {
-            fAccumulatedTime -= fTargetFrameTime;
-            fElapsedTime = fTargetFrameTime;
-        }
-        else
-            return true; // Don't do anything this frame
+        timer += fElapsedTime;
+        // if (fAccumulatedTime >= fTargetFrameTime)
+        // {
+        //     fAccumulatedTime -= fTargetFrameTime;
+        //     fElapsedTime = fTargetFrameTime;
+        // }
+        // else
+        //     return true; // Don't do anything this frame
 
         // Continue as normal
         std::cout << "TIME ELASPED: " << fAccumulatedTime << std::endl;
@@ -117,13 +131,26 @@ public:
 
         SetPixelMode(olc::Pixel::MASK);
 
+        // HANDLE END GAME
+        
+        // Check to see if all quadrants are filled. If so, reset
+        for (int i = 0; i < NUM_QUADS; i++) {
+            if (myQuadrants[i].imageDrawn) {
+                numQuadrantsFilled += 1;
+            }
+        }
+
+        if (numQuadrantsFilled == 9) {
+            resetProcedure();
+        }
+
         // PLAYER TURN
         if (GetMouse(0).bPressed) {
             std::cout << "X pressed: " << GetMouseX() << std::endl;
             std::cout << "Y pressed: " << GetMouseY() << std::endl;
 
             // When user presses on screen, determine if it occurs within the boundaries of a quadrant space
-            // And if there isn't already an image drawn there
+            // And whether an image is drawn there
             for (int i = 0; i < NUM_QUADS; i++) {
                 if ( 
                 (GetMouseX() >= myQuadrants[i].coordsStart.x) &&
@@ -137,6 +164,7 @@ public:
                     myQuadrants[i].imageKind = 1;
                     myQuadrants[i].imageDrawn = true;
                     playerDone = true;
+                    //timer = 0;
                 }
             }
         }
@@ -144,7 +172,6 @@ public:
         // DRAW STUFF
 
         // Draw borders
-
         // Left hand vertical
         FillRect( olc::vi2d(170-5, 0), olc::vi2d((GAME_WIDTH/32), GAME_HEIGHT), olc::DARK_CYAN );
         // Right hand verital
@@ -167,35 +194,37 @@ public:
         }
 
         // Draw text
-        DrawString(600, 100, "Welcome to Tic Tac Toe!", olc::BLACK);
+        std::string currentTurnString;
+        if (playerDone) {
+            currentTurnString = "It's the computer's turn";
+        } else if (playerDone == false) {
+            currentTurnString = "It's the player's turn";
+        }
+        DrawStringDecal(olc::vi2d(515, 50), "Welcome to Tic Tac Toe!", olc::BLACK, olc::vi2d(2,2));
+        DrawString(olc::vi2d(600, 100), currentTurnString, olc::BLACK);
 
         // COMPUTER TURN
-        if (playerDone) {
-            float timeStamp = fAccumulatedTime;
-            bool timeCheck = false;
+        float delayTime = 3.00f;    // To standarize time, timer should be set to 0 every time playerDone = true. As it is right now
+                                    // time is basically random.
+        std::cout << "TIMER: " << timer << std::endl;
+        while (timer >= delayTime) {    // This creates a "delay" before the computer's turn
+            timer -= delayTime;
+            // Computer will take turn if player is done theirs
+            if (playerDone) {
 
-            float delay = 10.0f;
+                bool computerDone = false;
+                int computersChoice;
+                while (!(computerDone)) {
+                    computersChoice = rand() % 8 + 0;
 
-            bool computerDone = false;
-            int computersChoice;
-            while (!(computerDone)) {
-                computersChoice = rand() % 8 + 0;
-
-                if (myQuadrants[computersChoice].imageDrawn == false)
-                    computerDone = true;
+                    if (myQuadrants[computersChoice].imageDrawn == false)
+                        computerDone = true;
+                }
+                myQuadrants[computersChoice].imageKind = 0;
+                myQuadrants[computersChoice].imageDrawn = true;
+                playerDone = false;
             }
-            myQuadrants[computersChoice].imageKind = 0;
-            myQuadrants[computersChoice].imageDrawn = true;
-            
-            // while(!(timeCheck)) {
-            //     std::cout << "Timestamp + 0.25: " << timeStamp + 0.05 << std::endl;
-            //     if (fAccumulatedTime == (timeStamp + 0.25)) {
-            //         myQuadrants[computersChoice].imageDrawn = true;
-            //         std::cout << "Time check out" << std::endl;
 
-            //         timeCheck = false;
-            //     }
-            // }
         }
 
         SetPixelMode(olc::Pixel::NORMAL);
