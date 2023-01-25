@@ -14,8 +14,21 @@
         Draw (): Uses member vars to draw at location
 */
 
+class TicTacToe : public olc::PixelGameEngine {
+
+public:
+    TicTacToe() {
+        sAppName = "Tic Tac Toe Clone";
+    }
+    int WINDOW_WIDTH = 900;
+    int WINDOW_HEIGHT = 480;
+    int GAME_WIDTH = 512;
+    int GAME_HEIGHT = 480;
+
+private:
+
 struct Cell {
-    olc::vi2d coordsStart;
+    olc::vi2d coordsStart;              // coordsStart
     olc::vi2d coordsEnd;
     olc::vi2d coordsImageStart;
     //olc::vi2d coordsImageEnd;
@@ -23,27 +36,8 @@ struct Cell {
     
     int imageKind = 0;
     bool imageDrawn = false;
+    };
 
-    // void DrawObj() {
-    //     if (imageKind == 1)
-    //         olc::PixelGameEngine::FillRect(coordsImageStart, imageSize, olc::BLUE);
-    //     else if (imageKind == 2)
-    //         olc::PixelGameEngine::FillRect(coordsImageStart, imageSize, olc::RED);
-    // }
-};
-
-class TicTacToe : public olc::PixelGameEngine {
-
-public:
-    TicTacToe() {
-        sAppName = "Tic Tac Toe Clone";
-    }
-    int GAME_WIDTH = 512;
-    int GAME_HEIGHT = 480;
-
-private:
-
-    olc::vi2d vBlockSize = { 128,128 };
     int X_DIFF = 180;
     int Y_DIFF = 170;
     int Y_DIFF_EACHROW = 160;
@@ -55,6 +49,9 @@ private:
         Quadrant4, Quadrant5, Quadrant6,
         Quadrant7, Quadrant8, Quadrant9
     };
+
+    float fTargetFrameTime = 1.0f / 100.0f; // Virtual FPS of 100fps
+    float fAccumulatedTime = 0.0f;
 
 public:
     bool OnUserCreate() override {
@@ -106,16 +103,8 @@ public:
 
     // }
 
-        return true;
+    /*
 
-    }
-
-    bool OnUserUpdate(float fElapsedTime) override {
-
-        // Erase previous frame
-        Clear(olc::GREY);
-
-        SetPixelMode(olc::Pixel::MASK);
         Quadrant1.coordsImageStart = olc::vi2d(18, 5);
         Quadrant2.coordsImageStart = olc::vi2d((GAME_WIDTH/2) - 62, 5);
         Quadrant3.coordsImageStart = olc::vi2d(((GAME_WIDTH/2) + 60 + 52), 5);
@@ -125,6 +114,43 @@ public:
         Quadrant7.coordsImageStart = olc::vi2d(18, 5 + 128 + 128 + 44 + 44);
         Quadrant8.coordsImageStart = olc::vi2d((GAME_WIDTH/2) - 62, 5 + 128 + 128 + 44 + 44);
         Quadrant9.coordsImageStart = olc::vi2d(((GAME_WIDTH/2) + 60 + 52), 5 + 128 + 128 + 44 + 44);
+
+
+*/
+        myQuadrants[0].coordsImageStart = olc::vi2d(20, 10);
+        myQuadrants[1].coordsImageStart = olc::vi2d((GAME_WIDTH/2) - 62, 10);
+        myQuadrants[2].coordsImageStart = olc::vi2d(((GAME_WIDTH/2) + 60 + 52), 10);
+
+        myQuadrants[3].coordsImageStart = olc::vi2d(18, 5 + 128 + 44);
+        myQuadrants[4].coordsImageStart = olc::vi2d((GAME_WIDTH/2) - 62, 5 + 128 + 44);
+        myQuadrants[5].coordsImageStart = olc::vi2d(((GAME_WIDTH/2) + 60 + 52), 5 + 128 + 44);
+
+        myQuadrants[6].coordsImageStart = olc::vi2d(18, 5 + 128 + 128 + 44 + 40);
+        myQuadrants[7].coordsImageStart = olc::vi2d((GAME_WIDTH/2) - 62, 5 + 128 + 128 + 44 + 40);
+        myQuadrants[8].coordsImageStart = olc::vi2d(((GAME_WIDTH/2) + 60 + 52), 5 + 128 + 128 + 44 + 40);
+
+        return true;
+
+    }
+
+    bool OnUserUpdate(float fElapsedTime) override {
+
+        fAccumulatedTime += fElapsedTime;
+        if (fAccumulatedTime >= fTargetFrameTime)
+        {
+            fAccumulatedTime -= fTargetFrameTime;
+            fElapsedTime = fTargetFrameTime;
+        }
+        else
+            return true; // Don't do anything this frame
+
+        // Continue as normal
+
+
+        // Erase previous frame
+        Clear(olc::WHITE);
+
+        SetPixelMode(olc::Pixel::MASK);
 
         // // Draw first row of blocks
         // FillRect( Quadrant1.coordsImageStart, vBlockSize, olc::RED );
@@ -141,16 +167,6 @@ public:
         // FillRect( olc::vi2d( (GAME_WIDTH/2) - 62 , 5 + 128 + 128 + 44 + 44 ), vBlockSize, olc::GREEN );
         // FillRect( olc::vi2d( ((GAME_WIDTH/2) + 60 + 52) , 5 + 128 + 128 + 44 + 44 ), vBlockSize, olc::BLUE );
 
-        // Draw borders
-        // Left hand vertical
-        FillRect( olc::vi2d(170-5, 0), olc::vi2d((GAME_WIDTH/32), GAME_HEIGHT), olc::DARK_CYAN );
-        // Right hand verital
-        FillRect( olc::vi2d(170+170-5, 0), olc::vi2d((GAME_WIDTH/32), GAME_HEIGHT), olc::DARK_CYAN );
-        // Top horizontal
-        FillRect( olc::vi2d(0, (GAME_HEIGHT/32) + 32 + 100), olc::vi2d(GAME_WIDTH, (GAME_HEIGHT/32)), olc::DARK_CYAN );
-        // Bottom horizontal
-        FillRect( olc::vi2d(0, (GAME_HEIGHT/32) + (GAME_HEIGHT/2) + 65 ), olc::vi2d(GAME_WIDTH, (GAME_HEIGHT/32)), olc::DARK_CYAN );
-
         // USER INPUT
 
         /*
@@ -165,6 +181,30 @@ public:
         //     std::cout << "Quadrant" << i << " image drawn: " << myQuadrants[i].imageDrawn << std::endl;
         // }
 
+        // DRAW BORDERS AND IMAGES
+
+        // Draw borders
+        // Left hand vertical
+        FillRect( olc::vi2d(170-5, 0), olc::vi2d((GAME_WIDTH/32), GAME_HEIGHT), olc::DARK_CYAN );
+        // Right hand verital
+        FillRect( olc::vi2d(170+170-5, 0), olc::vi2d((GAME_WIDTH/32), GAME_HEIGHT), olc::DARK_CYAN );
+        // Top horizontal
+        FillRect( olc::vi2d(0, (GAME_HEIGHT/32) + 32 + 100), olc::vi2d(GAME_WIDTH, (GAME_HEIGHT/32)), olc::DARK_CYAN );
+        // Bottom horizontal
+        FillRect( olc::vi2d(0, (GAME_HEIGHT/32) + (GAME_HEIGHT/2) + 65 ), olc::vi2d(GAME_WIDTH, (GAME_HEIGHT/32)), olc::DARK_CYAN );
+
+        // Draw images
+        for (int i = 0; i < NUM_QUADS; i++) {
+            if (myQuadrants[i].imageDrawn == true) {
+                //myQuadrants[i].DrawImage();
+                // std::cout << "Quadrant" << i << " image should be drawn" << std::endl;
+                // std::cout << "Quadrant" << i << " coordsImageStart: " << myQuadrants[i].coordsImageStart.x << ", " << myQuadrants[i].coordsImageStart.y << std::endl;
+                FillRect(myQuadrants[i].coordsImageStart, myQuadrants[i].imageSize, olc::BLUE);
+            }
+        }
+
+        // USER INPUT
+
         if (GetMouse(0).bPressed) {
             std::cout << "X pressed: " << GetMouseX() << std::endl;
             std::cout << "Y pressed: " << GetMouseY() << std::endl;
@@ -178,10 +218,10 @@ public:
                 (myQuadrants[i].imageDrawn == false)
                 ) {
                     std::cout << "Image to be drawn at Quadrant" << i << "!" << std::endl;
+                    myQuadrants[i].imageKind = 1;
                     myQuadrants[i].imageDrawn = true;
                 }
             }
-
         }
 
         SetPixelMode(olc::Pixel::NORMAL);
@@ -192,7 +232,7 @@ public:
 
 int main() {
     TicTacToe game;
-    if (game.Construct(game.GAME_WIDTH, game.GAME_HEIGHT, 2, 2))
+    if (game.Construct(game.WINDOW_WIDTH, game.WINDOW_HEIGHT, 2, 2))
         game.Start();
     return 0;
 }
