@@ -25,6 +25,7 @@ private:
         
         int imageKind = 0;                  // imageKind: 1 represents an image drawn by a player, 0 represents image drawn by the computer
         bool imageDrawn = false;            // imageDrawn: Whether or not an image should be drawn at this quadrant
+        bool imageChecked = false;
     };
 
     int X_DIFF = 180;                   // X_DIFF: Each quadrant occupies a width of 180 px. Used in determining coordsStart for each quadrant.
@@ -51,8 +52,10 @@ private:
 
     void resetProcedure() {
         for (int i = 0; i < NUM_QUADS; i++) {
+            std::cout << "Reset procedure reached" << std::endl;
             myQuadrants[i].imageDrawn = false;
             myQuadrants[i].imageKind = 0;
+            myQuadrants[i].imageChecked = false;
             timer = 0;
             playerDone = false;
             numQuadrantsFilled = 0;
@@ -109,22 +112,19 @@ public:
     }
 
     bool OnUserUpdate(float fElapsedTime) override {
-        std::cout << "Player Done: " << playerDone << std::endl;
         auto start = std::chrono::system_clock::now();
 
         // Info for FPS/game time
         fAccumulatedTime += fElapsedTime;
         timer += fElapsedTime;
-        // if (fAccumulatedTime >= fTargetFrameTime)
-        // {
-        //     fAccumulatedTime -= fTargetFrameTime;
-        //     fElapsedTime = fTargetFrameTime;
-        // }
-        // else
-        //     return true; // Don't do anything this frame
+        if (fAccumulatedTime >= fTargetFrameTime)
+        {
+            fAccumulatedTime -= fTargetFrameTime;
+            fElapsedTime = fTargetFrameTime;
+        }
+        else
+            return true; // Don't do anything this frame
 
-        // Continue as normal
-        std::cout << "TIME ELASPED: " << fAccumulatedTime << std::endl;
 
         // Erase previous frame
         Clear(olc::WHITE);
@@ -132,11 +132,11 @@ public:
         SetPixelMode(olc::Pixel::MASK);
 
         // HANDLE END GAME
-        
         // Check to see if all quadrants are filled. If so, reset
         for (int i = 0; i < NUM_QUADS; i++) {
-            if (myQuadrants[i].imageDrawn) {
+            if (myQuadrants[i].imageDrawn && myQuadrants[i].imageChecked == false) {
                 numQuadrantsFilled += 1;
+                myQuadrants[i].imageChecked = true;
             }
         }
 
@@ -206,7 +206,6 @@ public:
         // COMPUTER TURN
         float delayTime = 3.00f;    // To standarize time, timer should be set to 0 every time playerDone = true. As it is right now
                                     // time is basically random.
-        std::cout << "TIMER: " << timer << std::endl;
         while (timer >= delayTime) {    // This creates a "delay" before the computer's turn
             timer -= delayTime;
             // Computer will take turn if player is done theirs
