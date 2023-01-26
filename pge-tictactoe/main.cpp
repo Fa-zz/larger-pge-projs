@@ -1,5 +1,9 @@
 #define OLC_PGE_APPLICATION
 #include "olcPixelGameEngine.h"
+#include <list>
+#include <iterator>
+
+#include "stringButton.cpp"
 
 using namespace std::chrono_literals;
 
@@ -42,6 +46,12 @@ private:
         Quadrant7, Quadrant8, Quadrant9
     };
 
+    // Buttons
+    int NUM_BUTTONS = 2;
+    stringButton playAgainButton{600, 300, "Play Again", 590, 290, 180, 35};
+    stringButton quitButton{700, 400, "Quit", 690, 390, 180, 35};
+    std::list<stringButton> myButtons {playAgainButton, quitButton};
+
     // Info for FPS and time
     float fTargetFrameTime = 1.0f / 100.0f; // Virtual FPS of 100fps
     float fAccumulatedTime = 0.0f;
@@ -65,7 +75,6 @@ private:
 
 public:
     bool OnUserCreate() override {
-
         // Random seed
         srand(time(0));
 
@@ -102,10 +111,38 @@ public:
         myQuadrants[3].coordsImageStart = olc::vi2d(18, 5 + 128 + 44);
         myQuadrants[4].coordsImageStart = olc::vi2d((GAME_WIDTH/2) - 62, 5 + 128 + 44);
         myQuadrants[5].coordsImageStart = olc::vi2d(((GAME_WIDTH/2) + 60 + 52), 5 + 128 + 44);
-
+        
         myQuadrants[6].coordsImageStart = olc::vi2d(18, 5 + 128 + 128 + 44 + 40);
         myQuadrants[7].coordsImageStart = olc::vi2d((GAME_WIDTH/2) - 62, 5 + 128 + 128 + 44 + 40);
         myQuadrants[8].coordsImageStart = olc::vi2d(((GAME_WIDTH/2) + 60 + 52), 5 + 128 + 128 + 44 + 40);
+
+        // int pAStartX = 600;
+        // int pAStartY = 300;
+        // std::string pAText = "Play Again";
+        // int pARectX = 590;
+        // int pARectY = 290;
+        // int pARectScaleX = 180;
+        // int pARectScaleY = 35;
+
+
+        /*
+        Create buttons, create array of buttons. Set visibility appropriately.
+        In main game loop, use for loop to iterate through array. If visible, call makeButton 
+        If mouse clicks within bounds, call buttonFunctionality
+        */
+       
+        // stringButton playAgainButton(600, 300, "Play Again", 590, 290, 180, 35);
+        // stringButton quitButton(700, 400, "Quit", 690, 390, 180, 35);
+        playAgainButton.setVisible(false);
+        quitButton.setVisible(false);
+
+        // stringButton myStrButtons[2] = {playAgainButton, quitButton};
+
+        // Creates the button when visible=true
+        // void makeButton() {
+        //     olc::PixelGameEngine::DrawStringDecal(olc::vi2d(textStartX, textStartY), buttonText, olc::BLACK, olc::vi2d(2,2));
+        //     olc::PixelGameEngine::DrawRect(olc::vi2d(buttonStartX, buttonStartY), olc::vi2d(scaleX, scaleY), olc::MAGENTA);
+        // }
 
         return true;
 
@@ -130,6 +167,17 @@ public:
         Clear(olc::WHITE);
 
         SetPixelMode(olc::Pixel::MASK);
+
+        //textStartX, int textStartY, std::string buttonText, int buttonStartX, int buttonStartY, int scaleX, int scaleY
+
+        // CHECKING BUTTONS
+        for (auto it = myButtons.begin(); it != myButtons.end(); ++it) {
+            if (it->getVisible() == true) {
+                // draw button if it's supposed to be visible
+                DrawRect(olc::vi2d(it->getButtonStartX(), it->getButtonStartY()), olc::vi2d(it->getScaleX(), it->getScaleY()), olc::MAGENTA);
+                DrawStringDecal(olc::vi2d(it->getTextStartX(), it->getTextStartY()), it->getButtonText(), olc::BLACK, olc::vi2d(2,2));
+            }
+        }
 
         // HANDLE END GAME
         // Check to see if all quadrants are filled. If so, reset
@@ -194,14 +242,18 @@ public:
         }
 
         // Draw text
-        std::string currentTurnString;
+        std::string currentTurnString1 = "It's the";
+        std::string currentTurnString2;
         if (playerDone) {
-            currentTurnString = "It's the computer's turn";
+            currentTurnString2 = "computer's turn";
         } else if (playerDone == false) {
-            currentTurnString = "It's the player's turn";
+            currentTurnString2 = "player's turn";
         }
-        DrawStringDecal(olc::vi2d(515, 50), "Welcome to Tic Tac Toe!", olc::BLACK, olc::vi2d(2,2));
-        DrawString(olc::vi2d(600, 100), currentTurnString, olc::BLACK);
+        DrawStringDecal(olc::vi2d(515, 25), "Welcome to Tic Tac Toe!", olc::BLACK, olc::vi2d(2,2));
+        DrawStringDecal(olc::vi2d(590, 75), currentTurnString1, olc::BLACK, olc::vi2d(3,2));
+        DrawStringDecal(olc::vi2d(525, 100), currentTurnString2, olc::BLACK, olc::vi2d(3,2));
+    
+        //DrawString(olc::vi2d(600, 100), currentTurnString, olc::BLACK);
 
         // COMPUTER TURN
         float delayTime = 3.00f;    // To standarize time, timer should be set to 0 every time playerDone = true. As it is right now
